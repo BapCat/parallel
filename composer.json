@@ -1,0 +1,22 @@
+{
+  "name": "bapcat/parallel",
+  "description": "Parallel execution via worker forks",
+  "minimum-stability": "stable",
+  "license": "GPLv3",
+  "authors": [
+    {
+      "name": "Corey Frenette",
+      "email": "corey@narwhunderful.com"
+    }
+  ],
+  "require": {
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^6.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "BapCat\\Parallel\\": "src/"
+    }
+  }
+}
