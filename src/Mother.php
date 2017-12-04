@@ -1,6 +1,5 @@
 <?php namespace BapCat\Parallel;
 
-use Exception;
 use RuntimeException;
 
 /**
@@ -14,13 +13,15 @@ class Mother {
     $this->maxWorkers = $maxWorkers;
   }
 
-  public function start(callable $boss, callable $onWorkerFinished, callable $onWorkerFailed) {
+  public function start(callable $init, callable $loop, callable $onWorkerFinished, callable $onWorkerFailed) {
+    $init();
+
     while(true) {
       foreach($this->pids as $pid) {
         $ret = pcntl_waitpid($pid, $status, WNOHANG);
 
         if($ret === -1) {
-          throw new Exception('Failed to query worker');
+          throw new RuntimeException("Failed to query worker $pid");
         }
 
         if($ret === 0) {
@@ -28,16 +29,29 @@ class Mother {
         }
 
         unset($this->pids[$ret]);
-        $onWorkerFinished($ret);
+
+        $code = pcntl_wifexited($status) ? pcntl_wexitstatus($status) : -1;
+
+        if($code === 0) {
+          $onWorkerFinished($ret);
+        } else {
+          $onWorkerFailed($ret, $code);
+        }
       }
 
-      $boss();
+      $loop();
+
+      usleep(1000);
     }
   }
 
+  public function canSpawn() {
+    return count($this->pids) < $this->maxWorkers;
+  }
+
   public function spawn(callable $worker) {
-    if(count($this->pids) >= $this->maxWorkers) {
-      throw new Exception('No workers available');
+    if(!$this->canSpawn()) {
+      throw new RuntimeException('No workers available');
     }
 
     $pid = pcntl_fork();
@@ -48,9 +62,11 @@ class Mother {
 
     if($pid === 0) {
       $worker();
-      return;
+      exit(0);
     }
 
-    $this->pids[] = $pid;
+    $this->pids[$pid] = $pid;
+
+    return new Child($pid);
   }
 }
