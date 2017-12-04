@@ -8,7 +8,7 @@ WIP
 ## Installation
 
 ### Composer
-[Composer](https://getcomposer.org/) is the recommended method of installation for Collection.
+[Composer](https://getcomposer.org/) is the recommended method of installation for Parallel.
 
 ```
 $ composer require bapcat/parallel
