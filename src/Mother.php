@@ -49,7 +49,7 @@ class Mother {
     return count($this->pids) < $this->maxWorkers;
   }
 
-  public function spawn(callable $worker) {
+  public function spawn(callable $spawnWorker) {
     if(!$this->canSpawn()) {
       throw new RuntimeException('No workers available');
     }
@@ -61,12 +61,16 @@ class Mother {
     }
 
     if($pid === 0) {
-      $worker();
+      $this->workerProc($spawnWorker());
       exit(0);
     }
 
     $this->pids[$pid] = $pid;
 
     return new Child($pid);
+  }
+
+  private function workerProc(ForkedChild $child) {
+    $child->start();
   }
 }

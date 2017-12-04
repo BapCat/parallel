@@ -1,6 +1,6 @@
 <?php namespace BapCat\Parallel;
 
-use function msg_get_queue;
+use RuntimeException;
 
 class Child {
   private $pid;
@@ -10,5 +10,11 @@ class Child {
     $this->pid = $pid;
 
     $this->msgQueue = msg_get_queue($pid, 0600);
+  }
+
+  public function message($msg) {
+    if(!@msg_send($this->msgQueue, 1, $msg, true, true, $error)) {
+      throw new RuntimeException("Failed to send message: $error");
+    }
   }
 }

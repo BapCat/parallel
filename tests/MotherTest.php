@@ -1,5 +1,6 @@
 <?php
 
+use BapCat\Parallel\ForkedChild;
 use BapCat\Parallel\Mother;
 use PHPUnit\Framework\TestCase;
 
@@ -21,16 +22,18 @@ class MotherTest extends TestCase {
   public function motherStart() {
     echo getmypid() . ": Mother starting\n";
 
-    $this->mother->spawn([$this, 'childStart']);
-    $this->mother->spawn([$this, 'childStart']);
-    $this->mother->spawn([$this, 'childStart']);
-    $this->mother->spawn([$this, 'childStart']);
-    $this->mother->spawn([$this, 'childStart']);
-    $this->mother->spawn([$this, 'childStart']);
-    $this->mother->spawn([$this, 'childStart']);
-    $this->mother->spawn([$this, 'childStart']);
-    $this->mother->spawn([$this, 'childStart']);
-    $this->mother->spawn([$this, 'childStartFail']);
+    $child = $this->mother->spawn([$this, 'spawnChild']);
+    $this->mother->spawn([$this, 'spawnChild']);
+    $this->mother->spawn([$this, 'spawnChild']);
+    $this->mother->spawn([$this, 'spawnChild']);
+    $this->mother->spawn([$this, 'spawnChild']);
+    $this->mother->spawn([$this, 'spawnChild']);
+    $this->mother->spawn([$this, 'spawnChild']);
+    $this->mother->spawn([$this, 'spawnChild']);
+    $this->mother->spawn([$this, 'spawnChild']);
+    $this->mother->spawn([$this, 'failToSpawnChild']);
+
+    $child->message(['key' => 'val']);
   }
 
   public function motherSpin() {
@@ -45,12 +48,24 @@ class MotherTest extends TestCase {
     echo getmypid() . ": $pid exited with code $code\n";
   }
 
-  public function childStart() {
-    echo getmypid() . ": Child starting\n";
-    sleep(1);
+  public function spawnChild() {
+    return new class extends ForkedChild {
+      public function onStartup() {
+        echo getmypid() . ": Child starting\n";
+      }
+
+      public function onSpin() {
+        echo getmypid() . ": Child spinning\n";
+        $this->stop();
+      }
+
+      public function onMessage($msg) {
+        echo getmypid() . ": Got message " . var_export($msg, true) . "\n";
+      }
+    };
   }
 
-  public function childStartFail() {
+  public function failToSpawnChild() {
     echo getmypid() . ": Child starting\n";
     sleep(1);
     exit(1);
